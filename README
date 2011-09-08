@@ -5,7 +5,6 @@ All rights reserved.
 Developed by Dave Shea, http://www.mezzoblue.com/
 PaintbrushJS on GitHub: http://github.com/mezzoblue/PaintbrushJS
 
-
 PaintbrushJS is a lightweight, browser-based image processing library 
 that can apply various visual filters to images within a web page.
 
@@ -26,3 +25,8 @@ Firefox / Chrome only work when files exist on a web server. For
 more known issues, see: 
 
 http://wiki.github.com/mezzoblue/PaintbrushJS/known-issues
+
+---
+
+node.js modifications by Aaron Fay
+
