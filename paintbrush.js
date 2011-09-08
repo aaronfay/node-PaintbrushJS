@@ -1,27 +1,7 @@
-// --------------------------------------------------
-//
-// paintbrush.js, v0.3
-// A browser-based image processing library for HTML5 canvas
-// Developed by Dave Shea, http://www.mezzoblue.com/
-//
-// This project lives on GitHub:
-//    http://github.com/mezzoblue/PaintbrushJS
-//
-// Except where otherwise noted, PaintbrushJS is licensed under the MIT License:
-//    http://www.opensource.org/licenses/mit-license.php
-//
-// --------------------------------------------------
 
 
-
-
-// basic loader function to attach all filters used within the page
-addLoadEvent(function() {
-	processFilters();
-});
-
-
-
+var Canvas = require('canvas')
+/*
 // function to process all filters
 // (exists outside of loader to enable standalone use)
 function processFilters() {
@@ -47,12 +27,14 @@ function processFilters() {
 		addFilter("filter-tint", buffer, c);
 	}
 }
-
+*/
 
 // the main workhorse function
-function addFilter(filterType, buffer, c) {
-
-	// get every element with the specified filter class
+//function addFilter(filterType, buffer, c) {
+exports.process = function(img, filterType, buffer, c) {
+    
+    /*
+    // get every element with the specified filter class
 	var toFilter = getElementsByClassName(filterType.toLowerCase());
 
 	// now let's loop through those elements
@@ -67,21 +49,54 @@ function addFilter(filterType, buffer, c) {
 		// make sure we've actually got something to work with
 		img.onLoad = processFilters(filterType, img, params, toFilter, current, buffer, c);
 	}
+	*/
+	
+	
+	var params = {
+		"blurAmount"		:	1,		// 0 and higher
+		"edgesAmount"		:	1,		// between 0 and 1
+		"embossAmount"		:	0.25,	// between 0 and 1
+		"greyscaleOpacity"	:	1,		// between 0 and 1
+		"matrixAmount"		:	1,		// between 0 and 1
+		"mosaicOpacity"		:	1,		// between 0 and 1
+		"mosaicSize"		:	5,		// 1 and higher
+		"noiseAmount"		:	30,		// 0 and higher
+		"noiseType"			:	"mono",	// mono or color
+		"posterizeAmount"	:	5,		// 0 - 255, though 0 and 1 are relatively useless
+		"posterizeOpacity"	:	1,		// between 0 and 1
+		"sepiaOpacity"		:	1,		// between 0 and 1
+		"sharpenAmount"		:	0.25,	// between 0 and 1
+		"tintColor"			:	"#FFF",	// any hex color
+		"tintOpacity"		:	0.3		// between 0 and 1
+	}
+	
+	//img = 'foo'; // TODO: need img reference
+	if(img){
+	    
+	    
+	    
+	
+	    processFilters(filterType, img, params, buffer, c);
+	}
+	
 
 
-	function processFilters(filterType, img, params, toFilter, current, buffer, c) {
+	function processFilters(filterType, img, params, buffer, c) {
 
 		// quick access to original element
-		var ref = toFilter[current];
-
+		//var ref = toFilter[current];
+		
+		
 		// original image copy naming convention
-		var originalSuffix = filterType + "-" + current;
+		//var originalSuffix = filterType + "-" + current;
 
+        
 		// set buffer dimensions to image dimensions
 		c.width = buffer.width = img.width;
 		c.height = buffer.height = img.height;
 
-
+        
+        
 		if (img && c) {
 			// create the temporary pixel array we'll be manipulating
 			var pixels = initializeBuffer(c, img);
@@ -162,7 +177,7 @@ function addFilter(filterType, buffer, c) {
 				
 
 				// stash a copy and let the original know how to reference it
-				stashOriginal(img, originalSuffix, ref, buffer);
+				//stashOriginal(img, originalSuffix, ref, buffer);
 			
 			}
 		}
@@ -251,10 +266,14 @@ function addFilter(filterType, buffer, c) {
 	// apply a convolution matrix
 	function applyMatrix(img, pixels, matrix, amount) {
 
+        console.log('here')
+        var buffer2 = new Canvas(1,1);
+        var c2 = buffer2.getContext('2d');
+        console.log('here')
 		// create a second buffer to hold matrix results
-		var buffer2 = document.createElement("canvas");
+		//var buffer2 = document.createElement("canvas");
 		// get the canvas context 
-		var c2 = buffer2.getContext('2d');
+		//var c2 = buffer2.getContext('2d');
 
 		// set the dimensions
 		c2.width = buffer2.width = img.width;
@@ -359,53 +378,110 @@ function addFilter(filterType, buffer, c) {
 
 }
 
+// calculate gaussian blur
+// adapted from http://pvnick.blogspot.com/2010/01/im-currently-porting-image-segmentation.html
+function gaussianBlur(img, pixels, amount) {
 
+	var width = img.width;
+	var width4 = width << 2;
+	var height = img.height;
 
-// throw the data-* attributes into a JSON object
-function getFilterParameters(ref) {
+	if (pixels) {
+		var data = pixels.data;
 
-	// create the params object and set some default parameters up front
-	var params = {
-		"blurAmount"		:	1,		// 0 and higher
-		"edgesAmount"		:	1,		// between 0 and 1
-		"embossAmount"		:	0.25,	// between 0 and 1
-		"greyscaleOpacity"	:	1,		// between 0 and 1
-		"matrixAmount"		:	1,		// between 0 and 1
-		"mosaicOpacity"		:	1,		// between 0 and 1
-		"mosaicSize"		:	5,		// 1 and higher
-		"noiseAmount"		:	30,		// 0 and higher
-		"noiseType"			:	"mono",	// mono or color
-		"posterizeAmount"	:	5,		// 0 - 255, though 0 and 1 are relatively useless
-		"posterizeOpacity"	:	1,		// between 0 and 1
-		"sepiaOpacity"		:	1,		// between 0 and 1
-		"sharpenAmount"		:	0.25,	// between 0 and 1
-		"tintColor"			:	"#FFF",	// any hex color
-		"tintOpacity"		:	0.3		// between 0 and 1
-	};
-	
-	// check for every attribute, throw it into the params object if it exists.
-	for (var filterName in params){
-		// "tintColor" ==> "data-pb-tint-color"
-		var hyphenated = filterName.replace(/([A-Z])/g, function(all, letter) {  
-			return '-' + letter.toLowerCase(); 
-		}),
-		attr = ref.getAttribute("data-pb-" + hyphenated);
-		if (attr) {
-			params[filterName] = attr;
+		// compute coefficients as a function of amount
+		var q;
+		if (amount < 0.0) {
+			amount = 0.0;
 		}
+		if (amount >= 2.5) {
+			q = 0.98711 * amount - 0.96330; 
+		} else if (amount >= 0.5) {
+			q = 3.97156 - 4.14554 * Math.sqrt(1.0 - 0.26891 * amount);
+		} else {
+			q = 2 * amount * (3.97156 - 4.14554 * Math.sqrt(1.0 - 0.26891 * 0.5));
+		}
+
+		//compute b0, b1, b2, and b3
+		var qq = q * q;
+		var qqq = qq * q;
+		var b0 = 1.57825 + (2.44413 * q) + (1.4281 * qq ) + (0.422205 * qqq);
+		var b1 = ((2.44413 * q) + (2.85619 * qq) + (1.26661 * qqq)) / b0;
+		var b2 = (-((1.4281 * qq) + (1.26661 * qqq))) / b0;
+		var b3 = (0.422205 * qqq) / b0; 
+		var bigB = 1.0 - (b1 + b2 + b3); 
+
+		// horizontal
+		for (var c = 0; c < 3; c++) {
+			for (var y = 0; y < height; y++) {
+				// forward 
+				var index = y * width4 + c;
+				var indexLast = y * width4 + ((width - 1) << 2) + c;
+				var pixel = data[index];
+				var ppixel = pixel;
+				var pppixel = ppixel;
+				var ppppixel = pppixel;
+				for (; index <= indexLast; index += 4) {
+					pixel = bigB * data[index] + b1 * ppixel + b2 * pppixel + b3 * ppppixel;
+					data[index] = pixel; 
+					ppppixel = pppixel;
+					pppixel = ppixel;
+					ppixel = pixel;
+				}
+				// backward
+				index = y * width4 + ((width - 1) << 2) + c;
+				indexLast = y * width4 + c;
+				pixel = data[index];
+				ppixel = pixel;
+				pppixel = ppixel;
+				ppppixel = pppixel;
+				for (; index >= indexLast; index -= 4) {
+					pixel = bigB * data[index] + b1 * ppixel + b2 * pppixel + b3 * ppppixel;
+					data[index] = pixel;
+					ppppixel = pppixel;
+					pppixel = ppixel;
+					ppixel = pixel;
+				}
+			}
+		}
+
+		// vertical
+		for (var c = 0; c < 3; c++) {
+			for (var x = 0; x < width; x++) {
+				// forward 
+				var index = (x << 2) + c;
+				var indexLast = (height - 1) * width4 + (x << 2) + c;
+				var pixel = data[index];
+				var ppixel = pixel;
+				var pppixel = ppixel;
+				var ppppixel = pppixel;
+				for (; index <= indexLast; index += width4) {
+					pixel = bigB * data[index] + b1 * ppixel + b2 * pppixel + b3 * ppppixel;
+					data[index] = pixel;
+					ppppixel = pppixel;
+					pppixel = ppixel;
+					ppixel = pixel;
+				} 
+				// backward
+				index = (height - 1) * width4 + (x << 2) + c;
+				indexLast = (x << 2) + c;
+				pixel = data[index];
+				ppixel = pixel;
+				pppixel = ppixel;
+				ppppixel = pppixel;
+				for (; index >= indexLast; index -= width4) {
+					pixel = bigB * data[index] + b1 * ppixel + b2 * pppixel + b3 * ppppixel;
+					data[index] = pixel;
+					ppppixel = pppixel;
+					pppixel = ppixel;
+					ppixel = pixel;
+				}
+			}
+		} 
+
+		return(pixels);
 	}
-
-	// O Canada, I got your back. (And UK, AU, NZ, IE, etc.)
-	params['tintColor'] = ref.getAttribute("data-pb-tint-colour") || params['tintColor'];
-
-	// Posterize requires a couple more generated values, lets keep them out of the loop
-	params['posterizeAreas'] = 256 / params.posterizeAmount;
-	params['posterizeValues'] = 255 / (params.posterizeAmount - 1);
-
-	return(params);
 }
-
-
 
 function initializeBuffer(c, img) {
 	// clean up the buffer between iterations
@@ -430,7 +506,7 @@ function initializeBuffer(c, img) {
 			// AND YET, if I simply catch the exception, the filters render anyway and all is well.
 			// there must be a reason for this, I just don't know what it is yet.
 			//
-			// console.log("exception: " + err);
+			console.log("exception: " + err);
 		}
 	}
 
@@ -462,134 +538,3 @@ function setRGB(data, index, r, g, b) {
 }
 
 
-// sniff whether this is an actual img element, or some other element with a background image
-function getReferenceImage(ref) {
-	if (ref.nodeName == "IMG") {
-		// create a reference to the image
-		return ref;
-	} 
-	
-	// otherwise check if a background image exists
-	var bg = window.getComputedStyle(ref, null).backgroundImage;
-	
-	// if so, we're going to pull it out and create a new img element in the DOM
-	if (bg) {
-		var img = new Image();
-		// kill quotes in background image declaration, if they exist
-		// and return just the URL itself
-		img.src = bg.replace(/['"]/g,'').slice(4, -1);
-		return img;
-	}
-	return false;
-}
-
-// re-draw manipulated pixels to the reference image, regardless whether it was an img element or some other element with a background image
-function placeReferenceImage(ref, result, img) {
-	// dump the buffer as a DataURL
-	if (ref.nodeName == "IMG") {
-		img.src = result;
-	} else {
-		ref.style.backgroundImage = "url(" + result + ")";
-	}
-}
-	
-// add specified attribute name with specified value to passed object
-function addAttribute(obj, name, value) {
-	var newAttr = document.createAttribute(name);
-	newAttr.nodeValue = value;
-	return obj.setAttributeNode(newAttr);
-}
-
-
-// clear reference object's data-pb-* attributes
-function flushDataAttributes(img) {
-	for (var i = 0; i < img.attributes.length; i++) {
-		var thisAttr = img.attributes[i].name;
-		if (thisAttr.substr(0, 8) == "data-pb-") {
-			img.removeAttribute(thisAttr);
-		}
-	}
-}
-
-// remove any Paintbrush classes from the reference image
-function removeClasses(obj) {
-	// get classes of the reference image
-	var classList = (obj.className.toLowerCase()).split(' ');
-	for (var i = 0; i < classList.length; i++) {
-
-		// clean up any existing filter-* classes
-		if (classList[i].substr(0, 7) == "filter-") {
-			removeClass(obj, classList[i]);
-		}
-	}
-}
-
-
-// clean up stashed original copies and reference classes
-function destroyStash(img, preserve) {
-
-	var classList = (img.className.toLowerCase()).split(' ');
-	for (var i = 0; i < classList.length; i++) {
-
-		// quick reference
-		var currentClass = classList[i];
-
-		// have we found an original class?
-		if (currentClass.substr(0, 7) == "pb-ref-") {
-
-			// get the original object too
-			var original = document.getElementById("pb-original-" + currentClass.substr(7, currentClass.length - 7));
-			
-			// replace current with original if the preserve flag is set
-			if (preserve) {
-				img.src = original.src;
-			}
-
-			// kill them, kill them all
-			removeClass(img, currentClass);
-			
-			d = document.body;
-			throwaway = d.removeChild(original);
-
-		}
-	}
-	
-}
-
-function stashOriginal(img, originalSuffix, ref, buffer) {
-
-	// store the original image in the DOM
-	var stashed = stashInDom(img, originalSuffix);
-
-	// then replace the original image data with the buffer
-	placeReferenceImage(ref, buffer.toDataURL("image/png"), img);
-	
-	// and finally, add a class that references the stashed original image for later use
-	// (but only if we actually stashed one above)
-	if (stashed) {
-		ref.className += " pb-ref-" + originalSuffix;
-	}
-}
-
-// stash a copy of the original image in the DOM for later use
-function stashInDom(img, originalSuffix) {
-	
-	var orig = "pb-original-" + originalSuffix;
-
-	// make sure we're not re-adding on repeat calls
-	if (!document.getElementById(orig)) {
-
-		// create the stashed img element
-		var original = document.createElement("img");
-
-		// set the attributes
-		original.src = img.src;
-		original.id = orig;
-		original.style.display = "none";
-		document.body.appendChild(original);
-		
-		return true;
-	} else {
-		return false;
-	}
-}
